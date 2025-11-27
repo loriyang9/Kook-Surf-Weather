@@ -21,16 +21,6 @@
             --neo-cyan: #00FFFF;
             --neo-white: #FFFFFF;
             --neo-black: #000000;
-
-            /* Legacy mapping for easier refactor */
-            --ac-green: var(--neo-pink);
-            --ac-bg-pattern: #FF1493;
-            --ac-cream: var(--neo-white);
-            --ac-yellow: var(--neo-yellow);
-            --ac-brown: var(--neo-black);
-            --ac-blue: var(--neo-cyan);
-            --ac-dark: var(--neo-black);
-            --ac-card-border: var(--neo-black);
         }
 
         * {
@@ -43,7 +33,6 @@
         body {
             font-family: 'Zen Maru Gothic', sans-serif;
             background-color: var(--neo-pink);
-            /* Rougher pattern */
             background-image:
                 radial-gradient(circle, var(--neo-black) 1px, transparent 1px);
             background-size: 20px 20px;
@@ -66,22 +55,11 @@
             z-index: 100;
         }
 
-        <div class="status-bar"><div id="locationName" class="location-pill">📍 高雄</div><button onclick="getGPS()" style="
- background: var(--neo-cyan);
-        border: 3px solid var(--neo-black);
-        box-shadow: 4px 4px 0 var(--neo-black);
-        font-weight: 900;
-        padding: 5px 10px;
-        cursor: pointer;
-        font-family: inherit;
-
-        ">
- 📍 尋找我 </button><div id="updateTime" class="update-pill">更新中...</div></div>.location-pill {
+        .location-pill {
             background: var(--neo-yellow);
             color: var(--neo-black);
             padding: 8px 20px;
             border-radius: 0;
-            /* Flat */
             font-weight: 900;
             font-size: 1.2rem;
             transform: rotate(-2deg);
@@ -111,7 +89,6 @@
         .hero-card {
             background: var(--neo-white);
             border-radius: 10px;
-            /* Slight round but mostly square */
             padding: 30px 25px;
             text-align: center;
             box-shadow: 8px 8px 0 var(--neo-black);
@@ -243,7 +220,6 @@
             overflow-x: auto;
             gap: 20px;
             padding: 10px 5px 20px 5px;
-            /* Extra bottom padding for shadows */
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
@@ -314,53 +290,23 @@
         <div style="font-size: 4rem; animation: bounce 2s infinite;">🎀</div>
         <p
             style="color: var(--neo-black); font-weight: 900; margin-top: 20px; background: var(--neo-white); padding: 10px 20px; border: 3px solid var(--neo-black); box-shadow: 4px 4px 0 var(--neo-black);">
-            正在挑選今日穿搭...
+            正在尋找你在哪裡...
         </p>
     </div>
+
     <div class="status-bar">
-        <div class="location-pill">📍 新竹</div>
+        <div id="locationName" class="location-pill">📍 載入中...</div>
         <div id="updateTime" class="update-pill">更新中...</div>
     </div>
 
     <div class="container" id="mainContent" style="display: none;">
-
-        <div id="heroCard">
-        </div>
-
+        <div id="heroCard"></div>
         <h3 class="section-title">稍後預報</h3>
-        <div class="scroll-container" id="futureForecasts">
-        </div>
-
+        <div class="scroll-container" id="futureForecasts"></div>
     </div>
 
     <script>
-        const API_URL = "https://weather-task4.zeabur.app/api/weather/kaohsiung";
-
-        function getGPS() {
-            if (!navigator.geolocation) {
-                alert("芭比的手機找不到導航功能 (瀏覽器不支援)");
-                return;
-            }
-
-            // 顯示讀取中...
-            document.getElementById('locationName').innerText = "定位中...";
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-
-                    console.log("抓到位置囉：", lat, lon);
-
-                    // ★ 這裡最關鍵：抓到經緯度後，要傳給你的後端
-                    fetchWeatherByGPS(lat, lon);
-                },
-                () => {
-                    alert("找不到你的位置，難道你在夢幻屋的地下室？(定位失敗)");
-                    document.getElementById('locationName').innerText = "📍 未知";
-                }
-            );
-        }
+        const DEFAULT_API_URL = "https://weather-task4.zeabur.app/api/weather/kaohsiung";
 
         function getWeatherIcon(weather) {
             if (!weather) return "🌤️";
@@ -374,28 +320,20 @@
 
         function getAdvice(rainProb, maxTemp) {
             let rainIcon = "💖";
-            let rainText = "完美髮型日"; // 原本是：不用帶傘
-
-            // 下雨機率高
+            let rainText = "完美髮型日";
             if (parseInt(rainProb) > 30) {
-                rainIcon = "💅"; // 或者 🌂
-                rainText = "帶把粉紅傘"; // 原本是：記得帶傘！
+                rainIcon = "💅";
+                rainText = "帶把粉紅傘";
             }
-
             let clothIcon = "✨";
-            let clothText = "最棒的一天"; // 原本是：舒適穿搭 (Best Day Ever!)
-
-            // 氣溫高
+            let clothText = "最棒的一天";
             if (parseInt(maxTemp) >= 28) {
                 clothIcon = "🕶️";
-                clothText = "戴上墨鏡"; // 原本是：短袖出發
-            }
-            // 氣溫低
-            else if (parseInt(maxTemp) <= 20) {
+                clothText = "戴上墨鏡";
+            } else if (parseInt(maxTemp) <= 20) {
                 clothIcon = "🧥";
-                clothText = "穿粉紅夾克"; // 原本是：加件外套
+                clothText = "穿粉紅夾克";
             }
-
             return { rainIcon, rainText, clothIcon, clothText };
         }
 
@@ -413,99 +351,138 @@
             const current = forecasts[0];
             const others = forecasts.slice(1);
 
-            // 1. 渲染 Hero Card (主畫面)
             const advice = getAdvice(current.rain, current.maxTemp);
             const period = getTimePeriod(current.startTime);
             const avgTemp = Math.round((parseInt(current.maxTemp) + parseInt(current.minTemp)) / 2);
 
             document.getElementById('heroCard').innerHTML = `
-                        <div class="hero-card">
-                            <div class="hero-period">${period}</div>
-                            <div class="hero-temp-container">
-                                <div class="hero-icon">${getWeatherIcon(current.weather)}</div>
-                                <div class="hero-temp">${avgTemp}°</div>
-                            </div>
-                            <div class="hero-desc">${current.weather}</div>
-                            
-                            <div class="advice-grid">
-                                <div class="advice-item">
-                                    <div class="advice-icon">${advice.rainIcon}</div>
-                                    <div class="advice-text">${advice.rainText}</div>
-                                    <div style="font-size:0.8rem; color:var(--neo-black); font-weight:bold; border-top:2px solid var(--neo-black); width:100%; margin-top:5px; padding-top:5px;">降雨率 ${current.rain}</div>
-                                </div>
-                                <div class="advice-item">
-                                    <div class="advice-icon">${advice.clothIcon}</div>
-                                    <div class="advice-text">${advice.clothText}</div>
-                                    <div style="font-size:0.8rem; color:var(--neo-black); font-weight:bold; border-top:2px solid var(--neo-black); width:100%; margin-top:5px; padding-top:5px;">最高溫 ${current.maxTemp}°</div>
-                                </div>
-                            </div>
+                <div class="hero-card">
+                    <div class="hero-period">${period}</div>
+                    <div class="hero-temp-container">
+                        <div class="hero-icon">${getWeatherIcon(current.weather)}</div>
+                        <div class="hero-temp">${avgTemp}°</div>
+                    </div>
+                    <div class="hero-desc">${current.weather}</div>
+                    
+                    <div class="advice-grid">
+                        <div class="advice-item">
+                            <div class="advice-icon">${advice.rainIcon}</div>
+                            <div class="advice-text">${advice.rainText}</div>
+                            <div style="font-size:0.8rem; color:var(--neo-black); font-weight:bold; border-top:2px solid var(--neo-black); width:100%; margin-top:5px; padding-top:5px;">降雨率 ${current.rain}</div>
                         </div>
-                    `;
+                        <div class="advice-item">
+                            <div class="advice-icon">${advice.clothIcon}</div>
+                            <div class="advice-text">${advice.clothText}</div>
+                            <div style="font-size:0.8rem; color:var(--neo-black); font-weight:bold; border-top:2px solid var(--neo-black); width:100%; margin-top:5px; padding-top:5px;">最高溫 ${current.maxTemp}°</div>
+                        </div>
+                    </div>
+                </div>
+            `;
 
-            // 2. 渲染稍後預報 (包含明天判斷)
             const scrollContainer = document.getElementById('futureForecasts');
             scrollContainer.innerHTML = '';
-
-            // 抓今天的日期數字 (例如 24)
             const todayDate = new Date().getDate();
 
             others.forEach(f => {
                 let p = getTimePeriod(f.startTime);
-
-                // 判斷該預報的日期是否跟今天不同，不同就是明天
                 const fDate = new Date(f.startTime);
                 if (fDate.getDate() !== todayDate) {
                     p = "明天" + p;
                 }
-
                 scrollContainer.innerHTML += `
-                            <div class="mini-card">
-                                <div class="mini-time">${p}</div>
-                                <div class="mini-icon">${getWeatherIcon(f.weather)}</div>
-                                <div class="mini-temp">${f.minTemp}° - ${f.maxTemp}°</div>
-                                <div style="font-size:0.9rem; color:var(--neo-black); font-weight:bold; margin-top:5px; border-top:2px solid var(--neo-black); padding-top:5px;">💧${f.rain}</div>
-                            </div>
-                        `;
+                    <div class="mini-card">
+                        <div class="mini-time">${p}</div>
+                        <div class="mini-icon">${getWeatherIcon(f.weather)}</div>
+                        <div class="mini-temp">${f.minTemp}° - ${f.maxTemp}°</div>
+                        <div style="font-size:0.9rem; color:var(--neo-black); font-weight:bold; margin-top:5px; border-top:2px solid var(--neo-black); padding-top:5px;">💧${f.rain}</div>
+                    </div>
+                `;
             });
 
-            // 3. 右上角顯示今日日期
             const now = new Date();
             const month = now.getMonth() + 1;
             const date = now.getDate();
             const dayIndex = now.getDay();
             const days = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
-
             document.getElementById('updateTime').textContent = `${month}月${date}日 ${days[dayIndex]}`;
         }
 
-        async function fetchWeather() {
+        // === 1. 用 GPS 取得天氣 (精準版) ===
+        async function fetchWeatherByGPS(lat, lon) {
+            const url = `https://weather-task4.zeabur.app/api/weather/nearby?lat=${lat}&lon=${lon}`;
+
             try {
-                // 1. 定義「最低等待時間」：1500 毫秒 (1.5秒)
-                const delayPromise = new Promise(resolve => setTimeout(resolve, 1500));
+                const res = await fetch(url);
+                const json = await res.json();
 
-                // 2. 定義「抓取資料」的工作
-                const fetchPromise = fetch(API_URL).then(res => res.json());
+                if (json.success) {
+                    document.getElementById('locationName').innerText = "📍 " + json.city;
+                    renderWeather(json.data);
 
-                // 3. Promise.all 會等待「兩個都完成」才會往下走
-                // result 陣列裡，第一個是 delay 的結果(沒用到)，第二個是 api 的 json 資料
-                const [_, json] = await Promise.all([delayPromise, fetchPromise]);
+                    // 關閉 Loading
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                } else {
+                    throw new Error("API fail");
+                }
+            } catch (e) {
+                console.error(e);
+                // 失敗就切回預設
+                fetchDefaultWeather();
+            }
+        }
+
+        // === 2. 預設天氣 (如果找不到人，就跑這個) ===
+        async function fetchDefaultWeather() {
+            try {
+                // 顯示預設地點是高雄
+                document.getElementById('locationName').innerText = "📍 高雄";
+
+                const res = await fetch(DEFAULT_API_URL);
+                const json = await res.json();
 
                 if (json.success) {
                     renderWeather(json.data);
 
-                    // 資料處理好後，隱藏 Loading，顯示主畫面
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
-                } else {
-                    throw new Error("API Error");
                 }
             } catch (e) {
                 console.error(e);
-                alert("哎呀！肯尼不小心把網路線踢掉了！(讀取失敗)");
+                alert("連伺服器都壞了，肯尼這次麻煩大了！");
             }
         }
 
-        document.addEventListener("DOMContentLoaded", fetchWeather);
+        // === 3. 網頁一載入，主動發起偵測 ===
+        function initApp() {
+            // 如果瀏覽器不支援，直接跑預設
+            if (!navigator.geolocation) {
+                fetchDefaultWeather();
+                return;
+            }
+
+            // 請求定位
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // 成功：抓到經緯度
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    fetchWeatherByGPS(lat, lon);
+                },
+                (error) => {
+                    // 失敗 (使用者拒絕 或 錯誤)：跑預設
+                    console.log("定位被拒絕或失敗，載入預設值");
+                    fetchDefaultWeather();
+                },
+                {
+                    // 設定：最多等 5 秒，不然就當作失敗 (避免畫面卡住)
+                    timeout: 5000
+                }
+            );
+        }
+
+        // 啟動！
+        document.addEventListener("DOMContentLoaded", initApp);
     </script>
 </body>
 
