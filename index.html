@@ -5,9 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>芭比天氣</title>
-    <link rel="icon" type="image/png" href="./icon-v3.png">
-    <link rel="apple-touch-icon" href="./icon-v2.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="./icon-v2.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap"
@@ -121,10 +118,19 @@
             margin: 25px 0 15px 0;
         }
 
+        /* 修改：讓 Icon 支援圖片 */
         .hero-icon {
-            font-size: 5rem;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto;
             filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.2));
             animation: bounce 3s infinite;
+        }
+
+        .hero-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         @keyframes bounce {
@@ -256,9 +262,17 @@
             font-weight: bold;
         }
 
+        /* 修改：小圖示也支援圖片 */
         .mini-icon {
-            font-size: 3rem;
-            margin: 10px 0;
+            width: 60px;
+            height: 60px;
+            margin: 10px auto;
+        }
+
+        .mini-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .mini-temp {
@@ -308,32 +322,40 @@
     <script>
         const DEFAULT_API_URL = "https://weather-task4.zeabur.app/api/weather/kaohsiung";
 
+        // === 1. 3D 圖示設定 ===
         function getWeatherIcon(weather) {
-            if (!weather) return "🌤️";
-            if (weather.includes("晴")) return "☀️";
-            if (weather.includes("多雲")) return "⛅";
-            if (weather.includes("陰")) return "☁️";
-            if (weather.includes("雨")) return "🌧️";
-            if (weather.includes("雷")) return "⛈️";
-            return "🌤️";
+            let iconUrl = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun.png";
+
+            if (!weather) return `<img src="${iconUrl}">`;
+
+            if (weather.includes("晴")) {
+                iconUrl = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun.png";
+            }
+            else if (weather.includes("雷")) {
+                iconUrl = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Cloud%20with%20Lightning%20and%20Rain.png";
+            }
+            else if (weather.includes("雨")) {
+                iconUrl = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Cloud%20with%20Rain.png";
+            }
+            else if (weather.includes("多雲") || weather.includes("陰")) {
+                iconUrl = "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Sun%20Behind%20Cloud.png";
+            }
+
+            return `<img src="${iconUrl}" alt="${weather}">`;
         }
 
-        function getAdvice(rainProb, maxTemp) {
+        // === 2. 芭比穿搭建議 (使用單一溫度) ===
+        function getAdvice(rainProb, temp) {
             let rainIcon = "💖";
             let rainText = "完美髮型日";
-            if (parseInt(rainProb) > 30) {
-                rainIcon = "💅";
-                rainText = "帶把粉紅傘";
-            }
+            if (parseInt(rainProb) > 30) { rainIcon = "💅"; rainText = "帶把粉紅傘"; }
+
             let clothIcon = "✨";
             let clothText = "最棒的一天";
-            if (parseInt(maxTemp) >= 28) {
-                clothIcon = "🕶️";
-                clothText = "戴上墨鏡";
-            } else if (parseInt(maxTemp) <= 20) {
-                clothIcon = "🧥";
-                clothText = "穿粉紅夾克";
-            }
+
+            if (parseInt(temp) >= 28) { clothIcon = "🕶️"; clothText = "戴上墨鏡"; }
+            else if (parseInt(temp) <= 20) { clothIcon = "🧥"; clothText = "穿粉紅夾克"; }
+
             return { rainIcon, rainText, clothIcon, clothText };
         }
 
@@ -346,21 +368,22 @@
             return "深夜";
         }
 
+        // === 3. 渲染畫面主程式 ===
         function renderWeather(data) {
             const forecasts = data.forecasts;
             const current = forecasts[0];
             const others = forecasts.slice(1);
 
-            const advice = getAdvice(current.rain, current.maxTemp);
+            const advice = getAdvice(current.rain, current.temp);
             const period = getTimePeriod(current.startTime);
-            const avgTemp = Math.round((parseInt(current.maxTemp) + parseInt(current.minTemp)) / 2);
 
+            // Hero Card
             document.getElementById('heroCard').innerHTML = `
                 <div class="hero-card">
                     <div class="hero-period">${period}</div>
                     <div class="hero-temp-container">
                         <div class="hero-icon">${getWeatherIcon(current.weather)}</div>
-                        <div class="hero-temp">${avgTemp}°</div>
+                        <div class="hero-temp">${current.temp}°</div>
                     </div>
                     <div class="hero-desc">${current.weather}</div>
                     
@@ -368,46 +391,48 @@
                         <div class="advice-item">
                             <div class="advice-icon">${advice.rainIcon}</div>
                             <div class="advice-text">${advice.rainText}</div>
-                            <div style="font-size:0.8rem; color:var(--neo-black); font-weight:bold; border-top:2px solid var(--neo-black); width:100%; margin-top:5px; padding-top:5px;">降雨率 ${current.rain}</div>
+                            <div style="font-size:0.8rem; font-weight:bold; border-top:2px solid black; width:100%; margin-top:5px; padding-top:5px;">降雨率 ${current.rain}</div>
                         </div>
                         <div class="advice-item">
                             <div class="advice-icon">${advice.clothIcon}</div>
                             <div class="advice-text">${advice.clothText}</div>
-                            <div style="font-size:0.8rem; color:var(--neo-black); font-weight:bold; border-top:2px solid var(--neo-black); width:100%; margin-top:5px; padding-top:5px;">最高溫 ${current.maxTemp}°</div>
+                            <div style="font-size:0.8rem; font-weight:bold; border-top:2px solid black; width:100%; margin-top:5px; padding-top:5px;">氣溫 ${current.temp}°</div>
                         </div>
                     </div>
                 </div>
             `;
 
+            // Future Forecasts
             const scrollContainer = document.getElementById('futureForecasts');
             scrollContainer.innerHTML = '';
+
             const todayDate = new Date().getDate();
+            const daysName = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
 
             others.forEach(f => {
-                let p = getTimePeriod(f.startTime);
                 const fDate = new Date(f.startTime);
+                let hours = fDate.getHours().toString().padStart(2, '0');
+                let timeLabel = `${hours}:00`;
+
                 if (fDate.getDate() !== todayDate) {
-                    p = "明天" + p;
+                    timeLabel = `${daysName[fDate.getDay()]} ${hours}:00`;
                 }
+
                 scrollContainer.innerHTML += `
                     <div class="mini-card">
-                        <div class="mini-time">${p}</div>
+                        <div class="mini-time">${timeLabel}</div>
                         <div class="mini-icon">${getWeatherIcon(f.weather)}</div>
-                        <div class="mini-temp">${f.minTemp}° - ${f.maxTemp}°</div>
-                        <div style="font-size:0.9rem; color:var(--neo-black); font-weight:bold; margin-top:5px; border-top:2px solid var(--neo-black); padding-top:5px;">💧${f.rain}</div>
+                        <div class="mini-temp">${f.temp}°</div>
+                        <div style="font-size:0.9rem; font-weight:bold; margin-top:5px; border-top:2px solid black; padding-top:5px;">💧${f.rain}</div>
                     </div>
                 `;
             });
 
             const now = new Date();
-            const month = now.getMonth() + 1;
-            const date = now.getDate();
-            const dayIndex = now.getDay();
-            const days = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
-            document.getElementById('updateTime').textContent = `${month}月${date}日 ${days[dayIndex]}`;
+            document.getElementById('updateTime').textContent = `${now.getMonth() + 1}月${now.getDate()}日 ${daysName[now.getDay()]}`;
         }
 
-        // === 1. 用 GPS 取得天氣 (精準版) ===
+        // === 4. GPS & API 功能 ===
         async function fetchWeatherByGPS(lat, lon) {
             const url = `https://weather-task4.zeabur.app/api/weather/nearby?lat=${lat}&lon=${lon}`;
 
@@ -419,7 +444,6 @@
                     document.getElementById('locationName').innerText = "📍 " + json.city;
                     renderWeather(json.data);
 
-                    // 關閉 Loading
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
                 } else {
@@ -427,23 +451,18 @@
                 }
             } catch (e) {
                 console.error(e);
-                // 失敗就切回預設
                 fetchDefaultWeather();
             }
         }
 
-        // === 2. 預設天氣 (如果找不到人，就跑這個) ===
         async function fetchDefaultWeather() {
             try {
-                // 顯示預設地點是高雄
                 document.getElementById('locationName').innerText = "📍 高雄";
-
                 const res = await fetch(DEFAULT_API_URL);
                 const json = await res.json();
 
                 if (json.success) {
                     renderWeather(json.data);
-
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
                 }
@@ -453,35 +472,25 @@
             }
         }
 
-        // === 3. 網頁一載入，主動發起偵測 ===
         function initApp() {
-            // 如果瀏覽器不支援，直接跑預設
             if (!navigator.geolocation) {
                 fetchDefaultWeather();
                 return;
             }
-
-            // 請求定位
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    // 成功：抓到經緯度
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     fetchWeatherByGPS(lat, lon);
                 },
                 (error) => {
-                    // 失敗 (使用者拒絕 或 錯誤)：跑預設
-                    console.log("定位被拒絕或失敗，載入預設值");
+                    console.log("定位失敗，載入預設值");
                     fetchDefaultWeather();
                 },
-                {
-                    // 設定：最多等 5 秒，不然就當作失敗 (避免畫面卡住)
-                    timeout: 5000
-                }
+                { timeout: 5000 }
             );
         }
 
-        // 啟動！
         document.addEventListener("DOMContentLoaded", initApp);
     </script>
 </body>
