@@ -209,16 +209,50 @@
 
         /* === 稍後預報 === */
         .section-title {
-            font-size: 1.5rem;
-            color: var(--neo-black);
-            margin-bottom: 20px;
-            margin-left: 10px;
+            font-size: 1.8rem;
             font-weight: 900;
+            margin: 25px 0 15px 0;
+            color: var(--neo-black);
+            text-transform: uppercase;
+            transform: rotate(-1deg);
+        }
+
+        /* Wave Forecast Mini Card */
+        .wave-mini-card {
             background: var(--neo-white);
-            display: inline-block;
-            padding: 5px 15px;
             border: 3px solid var(--neo-black);
             box-shadow: 4px 4px 0 var(--neo-black);
+            border-radius: 8px;
+            padding: 12px;
+            min-width: 120px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .wave-mini-time {
+            background: var(--neo-black);
+            color: var(--neo-white);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .wave-stat {
+            margin: 6px 0;
+            font-size: 0.9rem;
+        }
+
+        .wave-stat-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .wave-stat-value {
+            font-weight: bold;
+            font-size: 1.1rem;
         }
 
         .scroll-container {
@@ -340,8 +374,14 @@
 
     <div class="container" id="mainContent" style="display: none;">
         <div id="heroCard"></div>
-        <h3 class="section-title">稍後預報</h3>
+
+        <!-- 天氣預報區塊 -->
+        <h3 class="section-title">🌤️ 天氣預報</h3>
         <div class="scroll-container" id="futureForecasts"></div>
+
+        <!-- 浪況預報區塊 -->
+        <h3 class="section-title" style="margin-top: 30px;">🌊 浪況預報</h3>
+        <div class="scroll-container" id="waveForecasts"></div>
     </div>
 
     <script>
@@ -515,6 +555,48 @@
                     </div>
                 `;
             });
+
+            // === Render Wave Forecasts ===
+            const waveForecastContainer = document.getElementById('waveForecasts');
+            waveForecastContainer.innerHTML = '';
+
+            const waveForecasts = data.waveForecasts || [];
+
+            if (waveForecasts.length > 0) {
+                waveForecasts.forEach(wf => {
+                    const wfDate = new Date(wf.time);
+                    let hours = wfDate.getHours().toString().padStart(2, '0');
+                    let timeLabel = `${hours}:00`;
+
+                    if (wfDate.getDate() !== todayDate) {
+                        timeLabel = `${daysName[wfDate.getDay()]} ${hours}:00`;
+                    }
+
+                    waveForecastContainer.innerHTML += `
+                        <div class="wave-mini-card">
+                            <div class="wave-mini-time">${timeLabel}</div>
+                            <div class="wave-stat">
+                                <div class="wave-stat-label">🌊 浪高</div>
+                                <div class="wave-stat-value">${wf.waveHeight}</div>
+                            </div>
+                            <div class="wave-stat">
+                                <div class="wave-stat-label">🧭 浪向</div>
+                                <div class="wave-stat-value" style="font-size: 0.85rem;">${wf.waveDir}</div>
+                            </div>
+                            <div class="wave-stat">
+                                <div class="wave-stat-label">⏱️ 週期</div>
+                                <div class="wave-stat-value">${wf.wavePeriod}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                waveForecastContainer.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #666;">
+                        暫無浪況預報數據
+                    </div>
+                `;
+            }
 
             const now = new Date();
             document.getElementById('updateTime').textContent = `${now.getMonth() + 1}月${now.getDate()}日 ${daysName[now.getDay()]}`;
