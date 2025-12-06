@@ -120,8 +120,8 @@
 
         /* 修改：讓 Icon 支援圖片 */
         .hero-icon {
-            width: 200px;
-            height: 200px;
+            width: 150px;
+            height: 150px;
             margin: 0 auto;
             font-size: 120px;
             /* 控制 emoji 大小 */
@@ -228,14 +228,20 @@
 
         /* Wave Forecast Mini Card */
         .wave-mini-card {
+            min-width: 150px;
             background: var(--neo-white);
-            border: 3px solid var(--neo-black);
-            box-shadow: 4px 4px 0 var(--neo-black);
-            border-radius: 8px;
-            padding: 12px;
-            min-width: 120px;
+            border-radius: 0;
+            padding: 20px 15px;
             text-align: center;
+            border: 3px solid var(--neo-black);
+            box-shadow: 6px 6px 0 var(--neo-black);
             flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .wave-mini-card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 8px 8px 0 var(--neo-black);
         }
 
         .wave-mini-time {
@@ -428,20 +434,90 @@
             return "❓"; // Default for unknown/missing
         }
 
-        // === 2. 芭比穿搭建議 (使用單一溫度) ===
-        function getAdvice(rainProb, temp) {
-            let rainIcon = "😎";
-            let rainText = "不用帶傘";
+        // === 2. 風向解析函數 ===
+        function parseWindDirection(windDirText) {
+            if (!windDirText || windDirText === "--") return null;
 
-            // Handle "--" or non-numeric
-            const rainVal = parseInt(rainProb);
-            const tempVal = parseInt(temp);
+            // 風向映射表（以來向為準）
+            const dirMap = {
+                "北": 0, "偏北": 0,
+                "東北": 45, "北東": 45,
+                "東": 90, "偏東": 90,
+                "東南": 135, "南東": 135,
+                "南": 180, "偏南": 180,
+                "西南": 225, "南西": 225,
+                "西": 270, "偏西": 270,
+                "西北": 315, "北西": 315
+            };
 
-            if (!isNaN(rainVal) && rainVal > 30) { rainIcon = "💅"; rainText = "帶把粉紅傘"; }
+            // 嘗試匹配風向文字
+            for (const [key, angle] of Object.entries(dirMap)) {
+                if (windDirText.includes(key)) {
+                    return angle;
+                }
+            }
 
+            return null;
+        }
+
+        // === 3. 風況對衝浪影響分析 ===
+        function analyzeWindForSurfing(windDir, beachFacing) {
+            // 計算夾角
+            let diff = Math.abs(windDir - beachFacing);
+            let angle = diff > 180 ? 360 - diff : diff;
+
+            // 根據夾角判斷風況類型
+            if (angle <= 45) {
+                return {
+                    type: "海風",
+                    quality: "差",
+                    emoji: "💨",
+                    description: "Onshore",
+                    icon: "🌊"
+                };
+            } else if (angle <= 135) {
+                return {
+                    type: "側風",
+                    quality: "普通",
+                    emoji: "🌬️",
+                    description: "Cross-shore",
+                    icon: "🏄"
+                };
+            } else {
+                return {
+                    type: "陸風",
+                    quality: "優",
+                    emoji: "✨",
+                    description: "Offshore",
+                    icon: "🤙"
+                };
+            }
+        }
+
+        // === 4. 芭比穿搭建議 (保留氣溫建議) ===
+        function getAdvice(windDirText, beachFacing, temp) {
+            // 風況分析
+            let windAdvice = null;
+            const windAngle = parseWindDirection(windDirText);
+
+            if (windAngle !== null && beachFacing) {
+                windAdvice = analyzeWindForSurfing(windAngle, beachFacing);
+            } else {
+                // 無風向數據時的預設值
+                windAdvice = {
+                    type: "風向未知",
+                    quality: "--",
+                    emoji: "❓",
+                    description: "Unknown",
+                    icon: "🌀"
+                };
+            }
+
+            // 溫度建議（保留）
             let clothIcon = "✨";
             let clothText = "最棒的一天";
 
+            const tempVal = parseInt(temp);
             if (!isNaN(tempVal)) {
                 if (tempVal >= 28) { clothIcon = "🕶️"; clothText = "戴上墨鏡"; }
                 else if (tempVal <= 20) { clothIcon = "🧥"; clothText = "穿粉紅夾克"; }
@@ -451,7 +527,7 @@
                 clothText = "天氣未知";
             }
 
-            return { rainIcon, rainText, clothIcon, clothText };
+            return { windAdvice, clothIcon, clothText };
         }
 
         function getTimePeriod(startTime) {
@@ -476,7 +552,7 @@
             const current = data.current; // Use the dedicated current object from backend
             const others = forecasts.slice(1);
 
-            const advice = getAdvice(current.rain, current.temp);
+            const advice = getAdvice(current.windDir, data.facing, current.temp);
 
             // 整合日期和時間顯示
             const currentTime = new Date(current.startTime);
@@ -499,18 +575,51 @@
                     </div>
                     <div class="hero-desc">${current.weather}</div>
                     
-                    <!-- Advice Grid (移到上方) -->
+                    <!-- Overall Assessment -->
+                    <div style="text-align: center; font-weight: bold; font-size: 1rem; padding: 15px; background: var(--neo-cyan); border: 2px solid black; border-radius: 5px; box-shadow: 4px 4px 0 black; margin-bottom: 15px;">
+                        ${current.overallAssessment || '綜合評估資訊不足'}
+                    </div>
+                    
+                    <!-- Advice Grid -->
                     <div class="advice-grid">
                         <div class="advice-item">
-                            <div class="advice-icon">${advice.rainIcon}</div>
-                            <div class="advice-text">${advice.rainText}</div>
-                            <div style="font-size:0.8rem; font-weight:bold; border-top:2px solid black; width:100%; margin-top:5px; padding-top:5px;">降雨率 ${current.rain}</div>
+                            <div class="advice-text" style="font-size:0.95rem; line-height:1.4; text-align:left; margin-bottom:8px;">${current.windNarrative || '風況資訊不足'}</div>
+                            <div style="font-size:0.8rem; font-weight:bold; border-top:2px solid black; width:100%; margin-top:5px; padding-top:5px; text-align:center;">風況分析</div>
                         </div>
                         <div class="advice-item">
-                            <div class="advice-icon">${advice.clothIcon}</div>
-                            <div class="advice-text">${advice.clothText}</div>
-                            <div style="font-size:0.8rem; font-weight:bold; border-top:2px solid black; width:100%; margin-top:5px; padding-top:5px;">氣溫 ${current.temp}°</div>
+                            <div class="advice-text" style="font-size:0.95rem; line-height:1.4; text-align:left; margin-bottom:8px;">${current.waveNarrative || '浪況資訊不足'}</div>
+                            <div style="font-size:0.8rem; font-weight:bold; border-top:2px solid black; width:100%; margin-top:5px; padding-top:5px; text-align:center;">浪況分析</div>
                         </div>
+                    </div>
+                    
+                    <!-- Board Suitability Analysis Section -->
+                    <div style="border-top: 3px solid black; margin: 20px 0;"></div>
+                    
+                    <!-- Board Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 10px;">
+                        <!-- Longboard -->
+                        <div class="advice-item" style="text-align: center;">
+                            <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">長板</div>
+                            <div style="font-size: 1.5rem; margin: 5px 0;">${current.boardSuitability?.longboard?.emoji || '😐'}</div>
+                            <div style="font-size: 0.85rem; line-height: 1.3; color: #333; margin-top: 8px;">${current.boardSuitability?.longboard?.reasoning || '資訊不足'}</div>
+                        </div>
+                        <!-- Shortboard -->
+                        <div class="advice-item" style="text-align: center;">
+                            <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">短板</div>
+                            <div style="font-size: 1.5rem; margin: 5px 0;">${current.boardSuitability?.shortboard?.emoji || '😐'}</div>
+                            <div style="font-size: 0.85rem; line-height: 1.3; color: #333; margin-top: 8px;">${current.boardSuitability?.shortboard?.reasoning || '資訊不足'}</div>
+                        </div>
+                        <!-- Funboard -->
+                        <div class="advice-item" style="text-align: center;">
+                            <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">Fun Board</div>
+                            <div style="font-size: 1.5rem; margin: 5px 0;">${current.boardSuitability?.funboard?.emoji || '😐'}</div>
+                            <div style="font-size: 0.85rem; line-height: 1.3; color: #333; margin-top: 8px;">${current.boardSuitability?.funboard?.reasoning || '資訊不足'}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Board Recommendation -->
+                    <div style="text-align: center; font-weight: bold; font-size: 0.95rem; padding: 10px; background: var(--neo-pink); border: 2px solid black; border-radius: 5px; box-shadow: 4px 4px 0 black; margin-bottom: 20px;">
+                        推薦 ${current.boardSuitability?.recommendedName || '無'}
                     </div>
                     
                     <!-- Marine Stats Grid (移到下方) -->
@@ -584,9 +693,6 @@
             waveForecastContainer.innerHTML = '';
 
             const waveForecasts = data.waveForecasts || [];
-            console.log('DEBUG: waveForecasts exists?', !!data.waveForecasts);
-            console.log('DEBUG: waveForecasts length:', waveForecasts.length);
-            console.log('DEBUG: waveForecasts sample:', waveForecasts[0]);
 
             if (waveForecasts.length > 0) {
                 waveForecasts.forEach(wf => {
@@ -632,6 +738,12 @@
             // 初始化卡片中的浪點選單
             const heroSelect = document.getElementById('spotSelectHero');
             if (heroSelect && heroSelect.options.length === 1) {
+                // 先移除 disabled 選項的 selected 屬性
+                const defaultOption = heroSelect.querySelector('option[disabled]');
+                if (defaultOption) {
+                    defaultOption.selected = false;
+                }
+
                 SURF_SPOTS.forEach(spot => {
                     const option = document.createElement('option');
                     option.value = spot.id;
@@ -639,9 +751,17 @@
                     heroSelect.appendChild(option);
                 });
 
-                // 如果有當前選中的浪點，設置選單值
+                // 如果有當前選中的浪點,設置選單值(在添加選項之後)
                 if (currentSpotId) {
+                    console.log('Setting heroSelect value to:', currentSpotId);
                     heroSelect.value = currentSpotId;
+                    // 如果設置失敗,手動選中
+                    if (heroSelect.value !== currentSpotId) {
+                        const option = Array.from(heroSelect.options).find(opt => opt.value === currentSpotId);
+                        if (option) {
+                            option.selected = true;
+                        }
+                    }
                 }
 
                 heroSelect.addEventListener('change', (e) => {
@@ -662,8 +782,16 @@
                     }
                 });
             } else if (heroSelect && currentSpotId) {
-                // 如果選單已存在，只需更新選中值
+                // 如果選單已存在,只需更新選中值
+                console.log('Updating existing heroSelect value to:', currentSpotId);
                 heroSelect.value = currentSpotId;
+                // 如果設置失敗,手動選中
+                if (heroSelect.value !== currentSpotId) {
+                    const option = Array.from(heroSelect.options).find(opt => opt.value === currentSpotId);
+                    if (option) {
+                        option.selected = true;
+                    }
+                }
             }
         }
 
@@ -677,14 +805,23 @@
                 const json = await res.json();
 
                 if (json.success) {
-                    // GPS 定位後，從返回的浪點 ID 查找縣市
-                    const spotName = json.city; // API 返回的浪點名稱
-                    // 嘗試從 SURF_SPOTS 找對應的縣市和 ID
-                    const matchedSpot = SURF_SPOTS.find(s => s.name === spotName);
+                    // 從 API 返回的資料中取得 spotId
+                    const spotId = json.spotId || json.data.spotId;
+                    const spotName = json.city;
+
+                    // 從 SURF_SPOTS 找對應的浪點
+                    const matchedSpot = SURF_SPOTS.find(s => s.id === spotId || s.name === spotName);
 
                     if (matchedSpot) {
                         currentSpotId = matchedSpot.id;  // 設置當前浪點 ID
                         currentSpotName = matchedSpot.name;
+
+                        // 保存到 localStorage
+                        try {
+                            localStorage.setItem('lastSpotId', currentSpotId);
+                        } catch (e) {
+                            console.warn('無法保存到 localStorage:', e);
+                        }
                     }
 
                     document.getElementById('locationName').innerText = "📍 " + (matchedSpot?.city || spotName);
@@ -720,8 +857,6 @@
                 document.getElementById('loading').style.display = 'flex';
                 const res = await fetch(url);
                 const json = await res.json();
-                console.log('DEBUG API Response:', json);
-                console.log('DEBUG waveForecasts in response:', json.data?.waveForecasts);
 
                 if (json.success) {
                     // 顯示縣市，從 SURF_SPOTS 陣列取得
