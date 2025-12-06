@@ -120,9 +120,18 @@
 
         /* 修改：讓 Icon 支援圖片 */
         .hero-icon {
-            width: 150px;
-            height: 150px;
+            width: 200px;
+            height: 200px;
             margin: 0 auto;
+            font-size: 120px;
+            /* 控制 emoji 大小 */
+            line-height: 200px;
+            /* 垂直居中 */
+            text-align: center;
+            /* 水平居中 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
             filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.2));
             animation: bounce 3s infinite;
         }
@@ -298,9 +307,11 @@
 
         /* 修改：小圖示也支援圖片 */
         .mini-icon {
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             margin: 10px auto;
+            font-size: 60px;
+            /* 控制小 emoji 大小 */
         }
 
         .mini-icon img {
@@ -363,12 +374,7 @@
     </div>
 
     <div class="status-bar">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <div id="locationName" class="location-pill">📍 載入中...</div>
-            <select id="spotSelect" class="location-pill" style="font-size: 1rem; padding: 5px 10px; cursor: pointer;">
-                <option value="" disabled selected>切換浪點 🏄</option>
-            </select>
-        </div>
+        <div id="locationName" class="location-pill">📍 載入中...</div>
         <div id="updateTime" class="update-pill">更新中...</div>
     </div>
 
@@ -457,6 +463,13 @@
             return "深夜";
         }
 
+        // 星期名稱常數
+        const DAYS_NAME = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
+
+        // 追蹤當前選中的浪點
+        let currentSpotId = null;
+        let currentSpotName = null;
+
         // === 3. 渲染畫面主程式 ===
         function renderWeather(data) {
             const forecasts = data.forecasts;
@@ -464,19 +477,43 @@
             const others = forecasts.slice(1);
 
             const advice = getAdvice(current.rain, current.temp);
-            const period = getTimePeriod(current.startTime);
+
+            // 整合日期和時間顯示
+            const currentTime = new Date(current.startTime);
+            const month = currentTime.getMonth() + 1;
+            const day = currentTime.getDate();
+            const weekday = DAYS_NAME[currentTime.getDay()];
+            const hours = currentTime.getHours().toString().padStart(2, '0');
+            const minutes = currentTime.getMinutes().toString().padStart(2, '0');
+            const timeString = `${month}/${day} ${weekday} ${hours}:${minutes}`;
 
             // Hero Card
             document.getElementById('heroCard').innerHTML = `
                 <div class="hero-card">
-                    <div class="hero-period">${period}</div>
+                    <select id="spotSelectHero" class="hero-period" style="cursor: pointer; text-align: center;">
+                        <option value="" disabled selected>選擇浪點 🏄</option>
+                    </select>
                     <div class="hero-temp-container">
                         <div class="hero-icon">${getWeatherIcon(current.weather)}</div>
                         <div class="hero-temp">${current.temp}°</div>
                     </div>
                     <div class="hero-desc">${current.weather}</div>
                     
-                    <!-- Marine Stats Grid -->
+                    <!-- Advice Grid (移到上方) -->
+                    <div class="advice-grid">
+                        <div class="advice-item">
+                            <div class="advice-icon">${advice.rainIcon}</div>
+                            <div class="advice-text">${advice.rainText}</div>
+                            <div style="font-size:0.8rem; font-weight:bold; border-top:2px solid black; width:100%; margin-top:5px; padding-top:5px;">降雨率 ${current.rain}</div>
+                        </div>
+                        <div class="advice-item">
+                            <div class="advice-icon">${advice.clothIcon}</div>
+                            <div class="advice-text">${advice.clothText}</div>
+                            <div style="font-size:0.8rem; font-weight:bold; border-top:2px solid black; width:100%; margin-top:5px; padding-top:5px;">氣溫 ${current.temp}°</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Marine Stats Grid (移到下方) -->
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; border-top: 4px solid var(--neo-black); padding-top: 20px;">
                         <!-- Row 1 -->
                         <div class="stat-box">
@@ -493,11 +530,11 @@
                         </div>
                         <!-- Row 2 -->
                         <div class="stat-box">
-                            <div class="stat-label">🌊 潮位</div>
+                            <div class="stat-label">� 潮位</div>
                             <div class="stat-value">${current.tideLevel || '--'}</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">📏 潮高</div>
+                            <div class="stat-label">� 潮高</div>
                             <div class="stat-value">${current.tideHeight || '--'}</div>
                         </div>
                         <div class="stat-box">
@@ -514,19 +551,6 @@
                             <div class="stat-value">${current.windSpeed || '--'}</div>
                         </div>
                     </div>
-
-                    <div class="advice-grid">
-                        <div class="advice-item">
-                            <div class="advice-icon">${advice.rainIcon}</div>
-                            <div class="advice-text">${advice.rainText}</div>
-                            <div style="font-size:0.8rem; font-weight:bold; border-top:2px solid black; width:100%; margin-top:5px; padding-top:5px;">降雨率 ${current.rain}</div>
-                        </div>
-                        <div class="advice-item">
-                            <div class="advice-icon">${advice.clothIcon}</div>
-                            <div class="advice-text">${advice.clothText}</div>
-                            <div style="font-size:0.8rem; font-weight:bold; border-top:2px solid black; width:100%; margin-top:5px; padding-top:5px;">氣溫 ${current.temp}°</div>
-                        </div>
-                    </div>
                 </div>
             `;
 
@@ -535,7 +559,6 @@
             scrollContainer.innerHTML = '';
 
             const todayDate = new Date().getDate();
-            const daysName = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
 
             others.forEach(f => {
                 const fDate = new Date(f.startTime);
@@ -543,7 +566,7 @@
                 let timeLabel = `${hours}:00`;
 
                 if (fDate.getDate() !== todayDate) {
-                    timeLabel = `${daysName[fDate.getDay()]} ${hours}:00`;
+                    timeLabel = `${DAYS_NAME[fDate.getDay()]} ${hours}:00`;
                 }
 
                 scrollContainer.innerHTML += `
@@ -569,7 +592,7 @@
                     let timeLabel = `${hours}:00`;
 
                     if (wfDate.getDate() !== todayDate) {
-                        timeLabel = `${daysName[wfDate.getDay()]} ${hours}:00`;
+                        timeLabel = `${DAYS_NAME[wfDate.getDay()]} ${hours}:00`;
                     }
 
                     waveForecastContainer.innerHTML += `
@@ -599,7 +622,46 @@
             }
 
             const now = new Date();
-            document.getElementById('updateTime').textContent = `${now.getMonth() + 1}月${now.getDate()}日 ${daysName[now.getDay()]}`;
+            const nowHours = now.getHours().toString().padStart(2, '0');
+            const nowMinutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('updateTime').textContent = `${now.getMonth() + 1}月${now.getDate()}日 ${DAYS_NAME[now.getDay()]} ${nowHours}:${nowMinutes}`;
+
+            // 初始化卡片中的浪點選單
+            const heroSelect = document.getElementById('spotSelectHero');
+            if (heroSelect && heroSelect.options.length === 1) {
+                SURF_SPOTS.forEach(spot => {
+                    const option = document.createElement('option');
+                    option.value = spot.id;
+                    option.textContent = spot.name;
+                    heroSelect.appendChild(option);
+                });
+
+                // 如果有當前選中的浪點，設置選單值
+                if (currentSpotId) {
+                    heroSelect.value = currentSpotId;
+                }
+
+                heroSelect.addEventListener('change', (e) => {
+                    if (e.target.value) {
+                        // 追蹤當前選擇的浪點
+                        currentSpotId = e.target.value;
+                        const selectedSpot = SURF_SPOTS.find(s => s.id === e.target.value);
+                        currentSpotName = selectedSpot ? selectedSpot.name : null;
+
+                        // 保存到 localStorage
+                        try {
+                            localStorage.setItem('lastSpotId', currentSpotId);
+                        } catch (e) {
+                            console.warn('無法保存到 localStorage:', e);
+                        }
+
+                        fetchWeatherBySpot(e.target.value);
+                    }
+                });
+            } else if (heroSelect && currentSpotId) {
+                // 如果選單已存在，只需更新選中值
+                heroSelect.value = currentSpotId;
+            }
         }
 
         // === 4. GPS & API 功能 ===
@@ -614,8 +676,13 @@
                 if (json.success) {
                     // GPS 定位後，從返回的浪點 ID 查找縣市
                     const spotName = json.city; // API 返回的浪點名稱
-                    // 嘗試從 SURF_SPOTS 找對應的縣市
+                    // 嘗試從 SURF_SPOTS 找對應的縣市和 ID
                     const matchedSpot = SURF_SPOTS.find(s => s.name === spotName);
+
+                    if (matchedSpot) {
+                        currentSpotId = matchedSpot.id;  // 設置當前浪點 ID
+                        currentSpotName = matchedSpot.name;
+                    }
 
                     document.getElementById('locationName').innerText = "📍 " + (matchedSpot?.city || spotName);
                     renderWeather(json.data);
@@ -635,6 +702,17 @@
             try {
                 // 從 SURF_SPOTS 找到對應的浪點
                 const spot = SURF_SPOTS.find(s => s.id === spotId);
+
+                // 立即設置當前浪點（這樣選單就能正確顯示）
+                currentSpotId = spotId;
+                currentSpotName = spot ? spot.name : null;
+
+                // 保存到 localStorage
+                try {
+                    localStorage.setItem('lastSpotId', spotId);
+                } catch (e) {
+                    console.warn('無法保存到 localStorage:', e);
+                }
 
                 document.getElementById('loading').style.display = 'flex';
                 const res = await fetch(url);
@@ -658,6 +736,8 @@
             try {
                 // 預設是外澳，從 SURF_SPOTS 找到對應的縣市
                 const defaultSpot = SURF_SPOTS.find(s => s.id === 'waiao');
+                currentSpotId = 'waiao';  // 設置當前浪點
+                currentSpotName = defaultSpot?.name || '外澳（雙獅）';
                 document.getElementById('locationName').innerText = "📍 " + (defaultSpot?.city || "宜蘭");
 
                 const res = await fetch(DEFAULT_API_URL);
@@ -674,24 +754,23 @@
             }
         }
 
-        function initDropdown() {
-            const select = document.getElementById('spotSelect');
-            SURF_SPOTS.forEach(spot => {
-                const option = document.createElement('option');
-                option.value = spot.id;
-                option.textContent = spot.name;
-                select.appendChild(option);
-            });
-
-            select.addEventListener('change', (e) => {
-                if (e.target.value) {
-                    fetchWeatherBySpot(e.target.value);
-                }
-            });
-        }
-
         function initApp() {
-            initDropdown();
+            // 檢查是否有保存的浪點偏好
+            let savedSpotId = null;
+            try {
+                savedSpotId = localStorage.getItem('lastSpotId');
+            } catch (e) {
+                console.warn('無法讀取 localStorage:', e);
+            }
+
+            // 如果有保存的浪點，直接載入
+            if (savedSpotId && SURF_SPOTS.find(s => s.id === savedSpotId)) {
+                console.log('載入上次選擇的浪點:', savedSpotId);
+                fetchWeatherBySpot(savedSpotId);
+                return;
+            }
+
+            // 沒有保存的浪點，嘗試使用 GPS 定位
 
             if (!navigator.geolocation) {
                 fetchDefaultWeather();
