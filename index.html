@@ -4,7 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>看浪天氣</title>
+    <title>Kook Weather-Kook 看浪指南</title>
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://loriyang9.github.io/Kook-Surf-Weather/">
+    <meta property="og:title" content="Kook Weather - Kook 看浪指南">
+    <meta property="og:description" content="即時中央氣象局風浪分析、板型推薦，還有超可愛的互動介面！">
+    <meta property="og:image" content="https://raw.githubusercontent.com/loriyang9/Kook-Surf-Weather/main/cover.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://loriyang9.github.io/Kook-Surf-Weather/">
+    <meta property="twitter:title" content="Kook Weather - Kook 看浪指南">
+    <meta property="twitter:description" content="即時中央氣象局風浪分析、板型推薦，還有超可愛的互動介面！">
+    <meta property="twitter:image"
+        content="https://raw.githubusercontent.com/loriyang9/Kook-Surf-Weather/main/cover.png">
+
+    <!-- iOS / Android Home Screen Icon -->
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/loriyang9/Kook-Surf-Weather/main/cover.png">
+    <link rel="icon" href="https://raw.githubusercontent.com/loriyang9/Kook-Surf-Weather/main/cover.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap"
@@ -12,12 +33,21 @@
 
     <style>
         :root {
-            /* Barbie Pink Palette */
-            --neo-pink: #FF69B4;
-            --neo-yellow: #FFEB3B;
-            --neo-cyan: #00FFFF;
-            --neo-white: #FFFFFF;
-            --neo-black: #000000;
+            --neo-black: #2D2D2D;
+            /* 小巧思：把純黑改成極深灰，會讓粉嫩色看起來不那麼硬 */
+            --neo-white: #FFFEFA;
+            /* 暖白 */
+
+            /* --- 核心配色 --- */
+
+            /* 很有活力的珊瑚粉 */
+            --neo-pink: #FF8FA3;
+
+            /* 飽和度稍高的起司黃 */
+            --neo-yellow: #FFE156;
+
+            /* 像晴天一樣的天空藍 */
+            --neo-cyan: #89CFF0;
         }
 
         * {
@@ -626,37 +656,37 @@
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; border-top: 4px solid var(--neo-black); padding-top: 20px;">
                         <!-- Row 1 -->
                         <div class="stat-box">
-                            <div class="stat-label">🌊 浪高</div>
+                            <div class="stat-label">浪高</div>
                             <div class="stat-value">${current.waveHeight || '--'}</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">🧭 浪向</div>
+                            <div class="stat-label">浪向</div>
                             <div class="stat-value">${current.waveDir || '--'}</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">⏱️ 週期</div>
+                            <div class="stat-label">週期</div>
                             <div class="stat-value">${current.wavePeriod || '--'}</div>
                         </div>
                         <!-- Row 2 -->
                         <div class="stat-box">
-                            <div class="stat-label">🌊 滿潮時間</div>
+                            <div class="stat-label">滿潮時間</div>
                             <div class="stat-value">${current.highTideTime || '--'}</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">🌊 乾潮時間</div>
+                            <div class="stat-label">乾潮時間</div>
                             <div class="stat-value">${current.lowTideTime || '--'}</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">🌡️ 海溫</div>
+                            <div class="stat-label">海溫</div>
                             <div class="stat-value">${current.seaTemp || '--'}</div>
                         </div>
                         <!-- Row 3 -->
                         <div class="stat-box">
-                            <div class="stat-label">🌬️ 風向</div>
+                            <div class="stat-label">風向</div>
                             <div class="stat-value">${current.windDir || '--'}</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">💨 風速</div>
+                            <div class="stat-label">風速</div>
                             <div class="stat-value">${current.windSpeed || '--'}</div>
                         </div>
                     </div>
