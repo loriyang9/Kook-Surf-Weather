@@ -427,11 +427,15 @@
         <!-- 浪況預報區塊 -->
         <h3 class="section-title" style="margin-top: 30px;">🌊 浪況預報</h3>
         <div class="scroll-container" id="waveForecasts"></div>
+
+        <div style="text-align: center; margin-top: 40px; color: #666; font-size: 0.8rem;">
+            Kook Weather v1.0.1 (Prod)
+        </div>
     </div>
 
     <script>
-        const DEFAULT_API_URL = "http://localhost:3001/api/weather/waiao"; // 預設改為外澳
-        // const DEFAULT_API_URL = "https://weather-task4.zeabur.app/api/weather/waiao";
+        // const DEFAULT_API_URL = "http://localhost:3001/api/weather/waiao"; // 預設改為外澳
+        const DEFAULT_API_URL = "https://weather-task4.zeabur.app/api/weather/waiao";
 
         // === 衝浪浪點列表 (與後端同步) ===
         const SURF_SPOTS = [
@@ -830,8 +834,8 @@
 
         // === 4. GPS & API 功能 ===
         async function fetchWeatherByGPS(lat, lon) {
-            const url = `http://localhost:3001/api/weather/nearby?lat=${lat}&lon=${lon}`;
-            // const url = `https://weather-task4.zeabur.app/api/weather/nearby?lat=${lat}&lon=${lon}`;
+            // const url = `http://localhost:3001/api/weather/nearby?lat=${lat}&lon=${lon}`;
+            const url = `https://weather-task4.zeabur.app/api/weather/nearby?lat=${lat}&lon=${lon}`;
 
             try {
                 document.getElementById('loading').style.display = 'flex';
@@ -872,8 +876,8 @@
         }
 
         async function fetchWeatherBySpot(spotId) {
-            const url = `http://localhost:3001/api/weather/${spotId}`;
-            // const url = `https://weather-task4.zeabur.app/api/weather/${spotId}`;
+            // const url = `http://localhost:3001/api/weather/${spotId}`;
+            const url = `https://weather-task4.zeabur.app/api/weather/${spotId}`;
             try {
                 // 從 SURF_SPOTS 找到對應的浪點
                 const spot = SURF_SPOTS.find(s => s.id === spotId);
@@ -902,7 +906,7 @@
                 }
             } catch (e) {
                 console.error(e);
-                alert("取得浪點天氣失敗");
+                alert("取得浪點天氣失敗: " + e.message + "\nPlease check your network.");
                 document.getElementById('loading').style.display = 'none';
             }
         }
